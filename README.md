@@ -1,4 +1,4 @@
 # Web-Status-Checker
 Just Run in Vercel
-#Example
+# Example
 https://webcheckerx.vercel.app/?url=https://google.com
