@@ -7,23 +7,35 @@ if (!isset($_GET['url']) || empty($_GET['url'])) {
     exit;
 }
 
+function getFinalUrl($url, $timeout) {
+    $context = stream_context_create([
+        'http' => [
+            'method'  => 'GET',
+            'timeout' => $timeout,
+            'follow_location' => 1
+        ]
+    ]);
+
+    $response = @file_get_contents($url, false, $context);
+    $status = $http_response_header ? (int)substr($http_response_header[0], 9, 3) : 502;
+
+    if ($status >= 300 && $status < 400) {
+        foreach ($http_response_header as $header) {
+            if (stripos($header, 'Location:') === 0) {
+                $newUrl = trim(substr($header, 9));
+                return getFinalUrl($newUrl, $timeout);
+            }
+        }
+    }
+
+    return [$response, $status];
+}
+
 $url = $_GET['url'];
 $timeout = 7;
 $start = microtime(true);
 
-$context = stream_context_create([
-    'http' => [
-        'method'  => 'GET',
-        'timeout' => $timeout
-    ]
-]);
-
-try {
-    $response = @file_get_contents($url, false, $context);
-    $status = $http_response_header ? (int)substr($http_response_header[0], 9, 3) : 502;
-} catch (Exception $e) {
-    $status = 502; // Bad Gateway
-}
+list($response, $status) = getFinalUrl($url, $timeout);
 
 $end = microtime(true);
 $totalTime = $end - $start;
@@ -42,5 +54,6 @@ if ($totalTime >= $timeout) {
 header('Content-Type: application/json');
 echo json_encode([
     'status' => $status,
+    'url' => $url,
     'response_time' => $responseTime
 ]);
