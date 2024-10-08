@@ -28,14 +28,14 @@ function getFinalUrl($url, $timeout) {
         }
     }
 
-    return [$response, $status];
+    return [$response, $status, $url];
 }
 
 $url = $_GET['url'];
 $timeout = 7;
 $start = microtime(true);
 
-list($response, $status) = getFinalUrl($url, $timeout);
+list($response, $status, $finalUrl) = getFinalUrl($url, $timeout);
 
 $end = microtime(true);
 $totalTime = $end - $start;
@@ -55,5 +55,6 @@ header('Content-Type: application/json');
 echo json_encode([
     'status' => $status,
     'url' => $url,
+    'final_url' => $finalUrl,
     'response_time' => $responseTime
 ]);
